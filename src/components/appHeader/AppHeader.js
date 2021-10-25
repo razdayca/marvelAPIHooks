@@ -8,13 +8,13 @@ const AppHeader = () => {
                     <span>Marvel</span> information portal
                 </a>
             </h1>
-            {/* <nav className="app__menu">
+            <nav className="app__menu">
                 <ul>
                     <li><a href="#">Characters</a></li>
                     /
                     <li><a href="#">Comics</a></li>
                 </ul>
-            </nav> */}
+            </nav>
         </header>
     )
 }
