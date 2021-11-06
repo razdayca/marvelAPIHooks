@@ -1,9 +1,24 @@
 import './charList.scss';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import useMarvelAPI from '../../services/marvelAPI';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 import PropTypes from 'prop-types';
+
+const setContent = (process, Compoment, newCharLoading) => {
+    switch (process) {
+        case 'waiting':
+            return <Spinner/>
+        case 'loading':
+            return newCharLoading ? <Compoment/> : <Spinner/>
+        case 'confirmed':
+            return <Compoment/>
+        case 'error':
+            return <ErrorMessage/>
+        default: 
+            throw new Error('Unexpected process state')
+    }
+}
 
 
 const CharList = (props) => {
@@ -13,10 +28,11 @@ const CharList = (props) => {
     const [offset, setOffset] = useState(210);
     const [charEnded, setCharEnded] = useState(false);
 
-    const {loading, error, getAllCharacters} = useMarvelAPI();
+    const {getAllCharacters, process, setProcess} = useMarvelAPI();
 
     useEffect(() => {
         onRequest(offset ,true);
+        // eslint-disable-next-line
     }, [])
 
     const onCharListLoaded = (newCharList) => {
@@ -25,15 +41,16 @@ const CharList = (props) => {
             ended = true
         }
         setCharList(charList => [...charList, ...newCharList]);
-        setNewCharLoading(newCharLoading => false);
+        setNewCharLoading(false);
         setOffset(offset => offset + 9);
-        setCharEnded(charEnded => ended)
+        setCharEnded(ended)
     }
 
     const onRequest = (offset, initial) => {
         initial ? setNewCharLoading(false) : setNewCharLoading(true);
         getAllCharacters(offset)
             .then(onCharListLoaded)
+            .then(() => setProcess('confirmed'))
     }
 
 
@@ -74,17 +91,15 @@ const CharList = (props) => {
         )
     }
 
-    const items = allChars(charList);
-
-    const spinner = loading && !newCharLoading ? <Spinner/> : null;
-    const errorMessage = error ? <ErrorMessage/> : null;
+    const elems = useMemo(() => {
+        return setContent(process, () => allChars(charList), newCharLoading);
+        // eslint-disable-next-line
+    }, [process])
 
     return (
         <div className="char__list">
             <ul className="char__grid">
-                {spinner}
-                {items}
-                {errorMessage}
+                {elems}
             </ul>
             <button className="button button__main button__long" disabled={newCharLoading} style={{'display': charEnded ? 'none' : null}} onClick={() => onRequest(offset)}>
                 <div className="inner">load more</div>
